@@ -133,6 +133,7 @@ function ZoneWorkspace({
             suggestedId={suggested?.id ?? null}
             player={player}
             focusedHeart={focusedHeart}
+            routeTarget={focusedHeart ?? suggested}
             onToggleHeart={toggleHeart}
             onTogglePoi={togglePoi}
             following={following}

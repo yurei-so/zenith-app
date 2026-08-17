@@ -3,15 +3,22 @@ import Overlay from "ol/Overlay";
 import View from "ol/View";
 import { defaults as defaultControls } from "ol/control/defaults";
 import TileLayer from "ol/layer/Tile";
+import VectorLayer from "ol/layer/Vector";
 import Projection from "ol/proj/Projection";
+import VectorSource from "ol/source/Vector";
 import XYZ from "ol/source/XYZ";
+import Feature from "ol/Feature";
+import LineString from "ol/geom/LineString";
+import Stroke from "ol/style/Stroke";
+import Style from "ol/style/Style";
 import TileGrid from "ol/tilegrid/TileGrid";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   continentBoundsToTileRange,
   mumbleHeadingToScreenRadians,
 } from "../domain/coordinates";
 import { appEvents } from "../domain/events";
+import { buildColorRoute } from "../domain/colorPathfinding";
 import type {
   ContinentPoint,
   Heart,
@@ -29,6 +36,7 @@ interface MapCanvasProps {
   suggestedId: number | null;
   player: PlayerSnapshot;
   focusedHeart: Heart | null;
+  routeTarget: Heart | null;
   onToggleHeart: (heart: Heart, anchor: HTMLElement) => void;
   onTogglePoi: (poi: PointOfInterest, anchor: HTMLElement) => void;
   following: boolean;
@@ -71,6 +79,7 @@ export function MapCanvas({
   suggestedId,
   player,
   focusedHeart,
+  routeTarget,
   onToggleHeart,
   onTogglePoi,
   following,
@@ -82,8 +91,20 @@ export function MapCanvas({
   const poiOverlaysRef = useRef(new globalThis.Map<number, ObjectiveOverlay>());
   const playerOverlayRef = useRef<Overlay | null>(null);
   const playerElementRef = useRef<HTMLDivElement | null>(null);
+  const routeSourceRef = useRef<VectorSource | null>(null);
+  const [routeEnabled, setRouteEnabled] = useState(false);
+  const [routeStatus, setRouteStatus] = useState<"idle" | "sampling" | "ready" | "error">("idle");
+  const [routeDetail, setRouteDetail] = useState("Experimental");
   const playerAvailable =
     player.connected && player.position !== null && player.mapId === zone.id;
+  // MumbleLink updates rapidly. Recalculate only after meaningful movement so
+  // color sampling and A* do not run on every telemetry packet.
+  const routeStartX = player.position
+    ? Math.round(player.position[0] / 256) * 256
+    : null;
+  const routeStartY = player.position
+    ? Math.round(player.position[1] / 256) * 256
+    : null;
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -157,6 +178,15 @@ export function MapCanvas({
         constrainResolution: true,
       }),
     });
+    const routeSource = new VectorSource();
+    map.addLayer(new VectorLayer({
+      source: routeSource,
+      zIndex: 30,
+      style: new Style({
+        stroke: new Stroke({ color: "rgba(255, 210, 94, .9)", width: 4, lineDash: [10, 8] }),
+      }),
+    }));
+    routeSourceRef.current = routeSource;
     map.getView().fit(zoneExtent, {
       padding: [28, 28, 108, 28],
       nearest: true,
@@ -172,6 +202,7 @@ export function MapCanvas({
       poiOverlays.clear();
       playerOverlayRef.current = null;
       playerElementRef.current = null;
+      routeSourceRef.current = null;
       mapRef.current = null;
     };
   }, [onFollowingChange, zone]);
@@ -319,6 +350,33 @@ export function MapCanvas({
     });
   }, [focusedHeart, onFollowingChange, zone.maxZoom]);
 
+  useEffect(() => {
+    const source = routeSourceRef.current;
+    source?.clear();
+    if (!routeEnabled || routeStartX === null || routeStartY === null || player.mapId !== zone.id || !routeTarget || !source) {
+      setRouteStatus("idle");
+      return;
+    }
+    const controller = new AbortController();
+    setRouteStatus("sampling");
+    setRouteDetail("Reading map colors…");
+    buildColorRoute(zone, [routeStartX, routeStartY], routeTarget.coordinate, controller.signal)
+      .then((route) => {
+        if (!route.points.length) throw new Error("No gloriously questionable route found");
+        source.addFeature(new Feature({
+          geometry: new LineString(route.points.map(toMapCoordinate)),
+        }));
+        setRouteStatus("ready");
+        setRouteDetail(`${route.confidence} confidence · ${route.sampledTiles} tiles`);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setRouteStatus("error");
+        setRouteDetail(error instanceof Error ? error.message : "Route experiment failed");
+      });
+    return () => controller.abort();
+  }, [player.mapId, routeEnabled, routeStartX, routeStartY, routeTarget, zone]);
+
   const toggleFollowing = useCallback(() => {
     if (!player.position || player.mapId !== zone.id) return;
     const next = !following;
@@ -349,6 +407,17 @@ export function MapCanvas({
         >
           <span aria-hidden="true">⌖</span>
           <small>{following ? "Following" : "Follow"}</small>
+        </button>
+        <button
+          className={routeEnabled ? "is-active is-experimental" : "is-experimental"}
+          disabled={!playerAvailable || !routeTarget}
+          onClick={() => setRouteEnabled((enabled) => !enabled)}
+          aria-pressed={routeEnabled}
+          title={routeTarget ? `Color-route to ${routeTarget.name}` : "Select a heart to route"}
+        >
+          <span aria-hidden="true">⌁</span>
+          <small>{routeStatus === "sampling" ? "Sampling" : "Chaos route"}</small>
+          {routeEnabled && <em>{routeDetail}</em>}
         </button>
       </div>
       <div className="map-legend" aria-label="Map objective legend">

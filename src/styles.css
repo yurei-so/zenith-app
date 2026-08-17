@@ -177,6 +177,21 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-bright); o
   text-transform: uppercase;
   white-space: nowrap;
 }
+.player-controls button.is-experimental { position: relative; min-width: 78px; }
+.player-controls button.is-experimental em {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: max-content;
+  max-width: 220px;
+  padding: 5px 7px;
+  color: #d9cfae;
+  background: rgba(8, 25, 19, .88);
+  border: 1px solid rgba(230, 189, 104, .2);
+  font: normal 8px/1.25 "DM Sans", sans-serif;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
 .map-legend {
   position: absolute;
   z-index: 650;
