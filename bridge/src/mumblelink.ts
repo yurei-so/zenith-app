@@ -96,6 +96,8 @@ export async function createMumbleLinkSource(): Promise<TelemetrySource> {
           characterName: parsed.characterName,
           gameBuild: parsed.gameBuild,
           inCombat: parsed.inCombat,
+          cameraPosition: parsed.cameraPosition,
+          cameraFront: parsed.cameraFront,
         };
       } catch {
         closeMapping();

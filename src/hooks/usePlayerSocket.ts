@@ -11,6 +11,8 @@ const WAITING: PlayerSnapshot = {
   characterName: null,
   timestamp: new Date(0).toISOString(),
   source: "mock",
+  cameraPosition: null,
+  cameraFront: null,
 };
 
 export function usePlayerSocket(url = "ws://127.0.0.1:38421") {

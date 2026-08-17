@@ -6,7 +6,7 @@ import TileLayer from "ol/layer/Tile";
 import Projection from "ol/proj/Projection";
 import XYZ from "ol/source/XYZ";
 import TileGrid from "ol/tilegrid/TileGrid";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   continentBoundsToTileRange,
   mumbleHeadingToScreenRadians,
@@ -31,6 +31,8 @@ interface MapCanvasProps {
   focusedHeart: Heart | null;
   onToggleHeart: (heart: Heart, anchor: HTMLElement) => void;
   onTogglePoi: (poi: PointOfInterest, anchor: HTMLElement) => void;
+  following: boolean;
+  onFollowingChange: (following: boolean) => void;
 }
 
 interface ObjectiveOverlay {
@@ -71,6 +73,8 @@ export function MapCanvas({
   focusedHeart,
   onToggleHeart,
   onTogglePoi,
+  following,
+  onFollowingChange,
 }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
@@ -78,7 +82,6 @@ export function MapCanvas({
   const poiOverlaysRef = useRef(new globalThis.Map<number, ObjectiveOverlay>());
   const playerOverlayRef = useRef<Overlay | null>(null);
   const playerElementRef = useRef<HTMLDivElement | null>(null);
-  const [following, setFollowing] = useState(false);
   const playerAvailable =
     player.connected && player.position !== null && player.mapId === zone.id;
 
@@ -159,7 +162,7 @@ export function MapCanvas({
       nearest: true,
     });
     map.on("pointerdrag", () => {
-      setFollowing(false);
+      onFollowingChange(false);
     });
     mapRef.current = map;
 
@@ -171,7 +174,7 @@ export function MapCanvas({
       playerElementRef.current = null;
       mapRef.current = null;
     };
-  }, [zone]);
+  }, [onFollowingChange, zone]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -308,24 +311,24 @@ export function MapCanvas({
     if (!focusedHeart) return;
     const map = mapRef.current;
     if (!map) return;
-    setFollowing(false);
+    onFollowingChange(false);
     map.getView().animate({
       center: toMapCoordinate(focusedHeart.coordinate),
       zoom: zone.maxZoom,
       duration: 550,
     });
-  }, [focusedHeart, zone.maxZoom]);
+  }, [focusedHeart, onFollowingChange, zone.maxZoom]);
 
   const toggleFollowing = useCallback(() => {
     if (!player.position || player.mapId !== zone.id) return;
     const next = !following;
-    setFollowing(next);
+    onFollowingChange(next);
     if (!next) return;
     mapRef.current?.getView().animate({
       center: toMapCoordinate(player.position),
       duration: 300,
     });
-  }, [following, player.mapId, player.position, zone.id]);
+  }, [following, onFollowingChange, player.mapId, player.position, zone.id]);
 
   const objectiveKinds = ["landmark", "waypoint", "vista"] as const;
 

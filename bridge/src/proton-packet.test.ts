@@ -9,7 +9,7 @@ describe("Proton relay protocol", () => {
   it("decodes a versioned loopback packet", () => {
     const packet = Buffer.alloc(PROTON_PACKET_SIZE);
     packet.write("ZNML", 0, "ascii");
-    packet.writeUInt16LE(1, 4);
+    packet.writeUInt16LE(2, 4);
     packet.writeUInt16LE(PROTON_PACKET_SIZE, 6);
     packet.writeUInt32LE(91, 8);
     packet.writeUInt32LE(15, 12);
@@ -21,6 +21,12 @@ describe("Proton relay protocol", () => {
     packet.writeFloatLE(Math.PI / 2, 36);
     packet.writeUInt8(8, 40);
     packet.write("Proton Mesmer", 44, "utf8");
+    packet.writeFloatLE(10, 172);
+    packet.writeFloatLE(2, 176);
+    packet.writeFloatLE(4, 180);
+    packet.writeFloatLE(0.5, 184);
+    packet.writeFloatLE(0, 188);
+    packet.writeFloatLE(-0.5, 192);
 
     const parsed = parseProtonPacket(packet);
     expect(parsed).toMatchObject({
@@ -30,6 +36,8 @@ describe("Proton relay protocol", () => {
       processId: 12345,
       mountIndex: 8,
       characterName: "Proton Mesmer",
+      cameraPosition: [10, 2, 4],
+      cameraFront: [0.5, 0, -0.5],
     });
     expect(parsed.position?.[0]).toBeCloseTo(44087.8, 1);
     expect(parsed.heading).toBeCloseTo(Math.PI / 2);

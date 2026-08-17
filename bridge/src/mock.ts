@@ -29,6 +29,8 @@ export function createMockSource(): TelemetrySource {
         position: [x, y] as const,
         heading: Math.atan2(to[0] - from[0], -(to[1] - from[1])),
         characterName: "Demo Wayfinder",
+        cameraPosition: [x / 39.3701, 2, y / 39.3701] as const,
+        cameraFront: [Math.sin(elapsedSeconds / 5), 0, -Math.cos(elapsedSeconds / 5)] as const,
       };
     },
     close() {},

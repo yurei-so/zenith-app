@@ -1,4 +1,5 @@
 export type ContinentPoint = readonly [x: number, y: number];
+export type Vector3 = readonly [x: number, y: number, z: number];
 
 export interface PlayerSnapshot {
   type: "player";
@@ -12,6 +13,8 @@ export interface PlayerSnapshot {
   source: "mumblelink" | "mock";
   gameBuild?: number;
   inCombat?: boolean;
+  cameraPosition?: Vector3 | null;
+  cameraFront?: Vector3 | null;
 }
 
 export interface TelemetrySource {

@@ -63,6 +63,11 @@ export function createHttpHandler(
         sendJson(response, 200, getPlayer());
         return;
       }
+      if (url.pathname === "/api/progression") {
+        const player = getPlayer();
+        sendJson(response, 200, await api.getPlayerProgression(player.characterName));
+        return;
+      }
       if (url.pathname === "/api/maps") {
         sendJson(response, 200, { ids: api.status().loadedMaps });
         return;

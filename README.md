@@ -19,6 +19,18 @@ small same-prefix relay when GW2 runs through Proton on Linux. An explicit
 simulator remains available for development without the game. The backend also
 provides cached, allowlisted access to public Guild Wars 2 map data.
 
+To show live account and current-character progression, create a Guild Wars 2
+API key with `account`, `progression`, and `characters` permissions and provide
+it only to the local backend:
+
+```bash
+ZENITH_GW2_API_KEY=your-key npm run dev
+```
+
+The key stays in the backend process and is never sent to the browser. Zenith
+refreshes the normalized `/api/progression` view every 30 seconds; manual map
+completion remains available when no key is configured.
+
 ## Run it
 
 Requires Node.js 20.19+ or 22.12+.
@@ -79,6 +91,13 @@ Queensdale's landmark POIs are layered from the public map payload rather than
 assumed to be legible in the raster tiles. They can be toggled manually and
 remain visible in a muted gray completed state. Existing heart completion
 storage is migrated additively to retain prior progress.
+
+Vista completion can also be inferred prospectively from MumbleLink. Zenith
+only arms the detector when exactly one incomplete vista is within 300 game
+units, the player is stationary and out of combat, and camera telemetry shows
+sustained translation and rotation followed by a settle period. This is a
+conservative local heuristic because neither MumbleLink nor the authenticated
+Guild Wars 2 API exposes a vista-completed event or historical objective IDs.
 
 ## Data and attribution
 

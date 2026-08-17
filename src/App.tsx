@@ -1,12 +1,15 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CompletionEffects } from "./components/CompletionEffects";
 import { HeartList } from "./components/HeartList";
 import { MapCanvas } from "./components/MapCanvas";
+import { PlayerProgression } from "./components/PlayerProgression";
 import { appEvents } from "./domain/events";
 import type { Heart, PlayerSnapshot, PointOfInterest, ZoneMap } from "./domain/types";
 import { useCompletion } from "./hooks/useCompletion";
 import { useMapData } from "./hooks/useMapData";
 import { usePlayerSocket } from "./hooks/usePlayerSocket";
+import { usePlayerProgression } from "./hooks/usePlayerProgression";
+import { useVistaDetection } from "./hooks/useVistaDetection";
 
 function nearestIncompleteHeart(
   hearts: Heart[],
@@ -28,9 +31,20 @@ interface ZoneWorkspaceProps {
   player: PlayerSnapshot;
   loading: boolean;
   error: string | null;
+  progression: ReturnType<typeof usePlayerProgression>;
+  following: boolean;
+  onFollowingChange: (following: boolean) => void;
 }
 
-function ZoneWorkspace({ zone, player, loading, error }: ZoneWorkspaceProps) {
+function ZoneWorkspace({
+  zone,
+  player,
+  loading,
+  error,
+  progression,
+  following,
+  onFollowingChange,
+}: ZoneWorkspaceProps) {
   const {
     completedHearts,
     completedPois,
@@ -38,6 +52,7 @@ function ZoneWorkspace({ zone, player, loading, error }: ZoneWorkspaceProps) {
     togglePoi: persistPoi,
   } = useCompletion(zone.id);
   const [focusedHeart, setFocusedHeart] = useState<Heart | null>(null);
+  useVistaDetection(zone, player, completedPois, persistPoi);
   const suggested = useMemo(
     () => nearestIncompleteHeart(zone.hearts, completedHearts, player.position),
     [completedHearts, player.position, zone.hearts],
@@ -94,6 +109,7 @@ function ZoneWorkspace({ zone, player, loading, error }: ZoneWorkspaceProps) {
               <i style={{ width: `${progress}%` }} />
             </div>
           </div>
+          <PlayerProgression {...progression} />
           <div className="list-heading">
             <h2>Renown hearts</h2>
             <span>{zone.hearts.length - completedHearts.size} remaining</span>
@@ -119,6 +135,8 @@ function ZoneWorkspace({ zone, player, loading, error }: ZoneWorkspaceProps) {
             focusedHeart={focusedHeart}
             onToggleHeart={toggleHeart}
             onTogglePoi={togglePoi}
+            following={following}
+            onFollowingChange={onFollowingChange}
           />
           <div className="map-wash" aria-hidden="true" />
           {suggested && (
@@ -136,6 +154,22 @@ function ZoneWorkspace({ zone, player, loading, error }: ZoneWorkspaceProps) {
 export default function App() {
   const player = usePlayerSocket();
   const { map, loading, error } = useMapData(player.mapId);
+  const progression = usePlayerProgression(player.connected);
+  const [following, setFollowing] = useState(() => {
+    try {
+      return localStorage.getItem("zenith:map:following") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("zenith:map:following", String(following));
+    } catch {
+      // Following still persists across map changes when storage is unavailable.
+    }
+  }, [following]);
 
   return (
     <main className="app-shell">
@@ -155,6 +189,9 @@ export default function App() {
         player={player}
         loading={loading}
         error={error}
+        progression={progression}
+        following={following}
+        onFollowingChange={setFollowing}
       />
       <CompletionEffects />
     </main>

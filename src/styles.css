@@ -63,6 +63,22 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-bright); o
 .progress-card strong small { color: #6d7c75; font-size: 13px; }
 .progress-track { height: 3px; overflow: hidden; background: rgba(255,255,255,.07); margin-top: 10px; }
 .progress-track i { display: block; height: 100%; background: linear-gradient(90deg, #b78c42, var(--gold-bright)); transition: width .35s ease; }
+.player-progression { padding: 17px 0 2px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.progression-heading { display: flex; align-items: center; justify-content: space-between; }
+.progression-heading h2 { margin: 0; text-transform: uppercase; font-size: 10px; letter-spacing: .18em; color: #b4c3ba; }
+.progression-heading span { color: #718078; font-size: 8px; letter-spacing: .13em; text-transform: uppercase; }
+.progression-heading span.is-live { color: #85d3aa; }
+.character-summary { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+.character-level { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid rgba(230,189,104,.4); border-radius: 50%; color: var(--gold-bright); font: 13px Marcellus, serif; }
+.character-summary > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.character-summary strong { color: #dbe6df; font-size: 11px; font-weight: 500; }
+.character-summary small { color: #74877d; font-size: 9px; text-transform: uppercase; letter-spacing: .1em; }
+.progression-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 13px 0 11px; }
+.progression-stats div { min-width: 0; }
+.progression-stats dt { color: #64766d; font-size: 8px; line-height: 1.25; text-transform: uppercase; letter-spacing: .08em; }
+.progression-stats dd { margin: 4px 0 0; color: #d8c48f; font: 13px Marcellus, serif; }
+.player-progression > p { margin: 10px 0 12px; color: #81958a; font-size: 9px; line-height: 1.45; }
+.player-progression > p.is-error { color: #d89b86; }
 .list-heading { display: flex; align-items: baseline; justify-content: space-between; margin: 19px 0 9px; }
 .list-heading h2 { margin: 0; text-transform: uppercase; font-size: 10px; letter-spacing: .18em; color: #b4c3ba; }
 .list-heading span { color: #65776e; font-size: 10px; }

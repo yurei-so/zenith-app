@@ -63,6 +63,8 @@ typedef struct {
     uint8_t mountIndex;
     uint8_t reserved[3];
     char characterName[128];
+    float cameraPosition[3];
+    float cameraFront[3];
 } ZenithPacket;
 #pragma pack(pop)
 
@@ -154,7 +156,7 @@ int main(void) {
         ZenithPacket packet;
         memset(&packet, 0, sizeof(packet));
         memcpy(packet.magic, "ZNML", 4);
-        packet.version = 1;
+        packet.version = 2;
         packet.size = (uint16_t)sizeof(packet);
         packet.tick = snapshot.uiTick;
         packet.mapId = context->mapId;
@@ -166,6 +168,8 @@ int main(void) {
         packet.heading = atan2f(snapshot.avatarFront[0], -snapshot.avatarFront[2]);
         packet.mountIndex = context->mountIndex;
         copy_character_name(packet.characterName, sizeof(packet.characterName), snapshot.identity);
+        memcpy(packet.cameraPosition, snapshot.cameraPosition, sizeof(packet.cameraPosition));
+        memcpy(packet.cameraFront, snapshot.cameraFront, sizeof(packet.cameraFront));
 
         sendto(
             socket_handle,

@@ -1,4 +1,4 @@
-import type { ContinentPoint, PlayerSnapshot } from "./types.js";
+import type { ContinentPoint, PlayerSnapshot, Vector3 } from "./types.js";
 
 export const MUMBLE_LINK_SIZE = 5460;
 
@@ -7,6 +7,8 @@ const offsets = {
   uiTick: 4,
   avatarPosition: 8,
   avatarFront: 20,
+  cameraPosition: 556,
+  cameraFront: 568,
   name: 44,
   identity: 592,
   contextLength: 1104,
@@ -67,6 +69,12 @@ export interface ParsedMumbleLink {
   heading: number | null;
   characterName: string | null;
   inCombat: boolean;
+  cameraPosition: Vector3 | null;
+  cameraFront: Vector3 | null;
+}
+
+function finiteVector(vector: Vector3): Vector3 | null {
+  return vector.every(Number.isFinite) ? vector : null;
 }
 
 export function parseMumbleLink(bytes: Uint8Array): ParsedMumbleLink {
@@ -107,6 +115,8 @@ export function parseMumbleLink(bytes: Uint8Array): ParsedMumbleLink {
     heading: headingFromFront(avatarFront),
     characterName: identity,
     inCombat: Boolean(uiState & (1 << 6)),
+    cameraPosition: finiteVector(readVector3(view, offsets.cameraPosition)),
+    cameraFront: finiteVector(readVector3(view, offsets.cameraFront)),
   };
 }
 
@@ -120,5 +130,7 @@ export function disconnectedMumbleSnapshot(): Omit<
     position: null,
     heading: null,
     characterName: null,
+    cameraPosition: null,
+    cameraFront: null,
   };
 }

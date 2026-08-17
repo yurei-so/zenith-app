@@ -42,6 +42,8 @@ let currentPlayer: PlayerSnapshot = {
   characterName: null,
   timestamp: new Date().toISOString(),
   source: source.kind,
+  cameraPosition: null,
+  cameraFront: null,
 };
 
 const api = new Gw2ApiClient();
