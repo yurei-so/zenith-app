@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { resolve } from "node:path";
 import { WebSocketServer, type WebSocket } from "ws";
 import { Gw2ApiClient } from "./gw2-api.js";
 import { GuideChatClient } from "./guide-chat.js";
@@ -53,7 +54,8 @@ const guide = new GuideChatClient(
   process.env.ZENITH_CHAT_AGENT_ID ?? "zenith-guide",
 );
 const server = createServer(
-  createHttpHandler(api, guide, () => currentPlayer, startedAt),
+  createHttpHandler(api, guide, () => currentPlayer, startedAt,
+    process.env.ZENITH_WEB_ROOT ?? resolve(process.cwd(), "dist")),
 );
 const sockets = new WebSocketServer({ noServer: true });
 

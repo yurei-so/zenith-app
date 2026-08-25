@@ -1,0 +1,21 @@
+[Unit]
+Description=Zenith Guild Wars 2 companion
+After=graphical-session.target chat-runtime-zenith-workstation.service
+Wants=chat-runtime-zenith-workstation.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/github/zenith-app
+Environment=ZENITH_WEB_ROOT=%h/github/zenith-app/dist
+Environment=ZENITH_CHAT_RUNTIME_SOCKET=%t/chat-runtime-zenith/chat-runtime.sock
+PassEnvironment=DISPLAY WAYLAND_DISPLAY XAUTHORITY XDG_RUNTIME_DIR
+ExecStart=/usr/bin/node %h/github/zenith-app/dist-bridge/index.js --proton
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+
+[Install]
+WantedBy=default.target

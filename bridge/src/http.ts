@@ -1,4 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { readFile } from "node:fs/promises";
+import { extname, resolve, sep } from "node:path";
 import { Gw2ApiClient } from "./gw2-api.js";
 import type { GuideChatClient } from "./guide-chat.js";
 import type { PlayerSnapshot } from "./types.js";
@@ -31,6 +33,7 @@ export function createHttpHandler(
   guide: Pick<GuideChatClient, "submit">,
   getPlayer: () => PlayerSnapshot,
   startedAt: number,
+  webRoot?: string,
 ) {
   return async (request: IncomingMessage, response: ServerResponse) => {
     setCors(request, response);
@@ -96,12 +99,56 @@ export function createHttpHandler(
         sendJson(response, 200, map);
         return;
       }
+      if (webRoot && !url.pathname.startsWith("/api/")) {
+        await sendStatic(response, webRoot, url.pathname);
+        return;
+      }
       sendJson(response, 404, { error: "Not found" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unexpected backend error";
       sendJson(response, 502, { error: message });
     }
   };
+}
+
+const CONTENT_TYPES: Record<string, string> = {
+  ".css": "text/css; charset=utf-8",
+  ".html": "text/html; charset=utf-8",
+  ".ico": "image/x-icon",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+};
+
+async function sendStatic(response: ServerResponse, webRoot: string, pathname: string) {
+  const root = resolve(webRoot);
+  let decoded: string;
+  try { decoded = decodeURIComponent(pathname); }
+  catch { sendJson(response, 400, { error: "Invalid path" }); return; }
+  const requested = resolve(root, `.${decoded}`);
+  if (requested !== root && !requested.startsWith(`${root}${sep}`)) {
+    sendJson(response, 404, { error: "Not found" });
+    return;
+  }
+  const file = decoded === "/" || !extname(decoded) ? resolve(root, "index.html") : requested;
+  try {
+    const payload = await readFile(file);
+    const extension = extname(file).toLowerCase();
+    response.writeHead(200, {
+      "content-type": CONTENT_TYPES[extension] ?? "application/octet-stream",
+      "content-length": payload.byteLength,
+      "cache-control": extension === ".html" ? "no-cache" : "public, max-age=31536000, immutable",
+      "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.guildwars2.com; connect-src 'self' ws://127.0.0.1:38421 http://127.0.0.1:38421; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+      "cross-origin-opener-policy": "same-origin",
+      "referrer-policy": "no-referrer",
+      "x-content-type-options": "nosniff",
+    });
+    response.end(payload);
+  } catch {
+    sendJson(response, 404, { error: "Not found" });
+  }
 }
 
 async function readGuideInput(request: IncomingMessage) {

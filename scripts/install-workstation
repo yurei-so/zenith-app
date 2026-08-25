@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+install -d -m 0755 "$HOME/.config/systemd/user" "$HOME/.local/share/applications"
+install -m 0644 "$ROOT/systemd/zenith-app.service" "$HOME/.config/systemd/user/zenith-app.service"
+sed "s|@PROJECT_ROOT@|$ROOT|g" "$ROOT/desktop/zenith.desktop.in" > "$HOME/.local/share/applications/zenith.desktop"
+chmod 0644 "$HOME/.local/share/applications/zenith.desktop"
+systemctl --user daemon-reload
+systemctl --user enable --now zenith-app.service

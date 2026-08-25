@@ -51,6 +51,23 @@ npm run check
 npm run build
 ```
 
+## Install the workstation app
+
+The production package serves the built UI and loopback API from one hardened
+user service at <http://127.0.0.1:38421>. It does not run Vite in production.
+Install the service and desktop launcher with:
+
+```bash
+npm run build
+./scripts/install-workstation
+```
+
+Launch **Zenith** from the desktop application menu or run
+`./scripts/launch-zenith`. The launcher starts the service if needed, waits for
+readiness, and opens the loopback UI. The service starts automatically with the
+user session and connects to the separately sandboxed Zenith Guide runtime when
+available.
+
 ## Architecture
 
 ```text
@@ -60,8 +77,9 @@ GW2 MumbleLink shared memory
                                              │
                                              ▼
 ArenaNet public API ── cache/allowlist ── native backend :38421
+                                             ├── production UI assets
                                              ▼
-                         normalized WebSocket│and HTTP API
+                         normalized WebSocket│and bounded HTTP API
                                              ▼
 React state ── OpenLayers map ── completion store (localStorage)
                    │

@@ -32,7 +32,8 @@ See `proton/README.md` for the boundary and reproducible build details.
 
 ## HTTP API
 
-The backend listens only on `127.0.0.1:38421`.
+The backend listens only on `127.0.0.1:38421`. Production builds also serve the
+compiled Zenith UI from this same origin; development continues to use Vite.
 
 | Endpoint | Purpose |
 | --- | --- |

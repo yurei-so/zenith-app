@@ -376,6 +376,13 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-bright); o
   background: radial-gradient(circle at 35% 30%, #fff2bd, #d1a34e 58%, #725126);
   box-shadow: 0 0 15px rgba(230,189,104,.2); font: 700 17px Marcellus, serif;
 }
+.guide-launcher span, .guide-identity > span { position: relative; }
+.guide-launcher span::after, .guide-identity > span::after {
+  content: ""; position: absolute; left: 50%; bottom: -5px; width: 17px; height: 9px;
+  transform: translateX(-50%); background: #d6a84d;
+  clip-path: polygon(0 0, 50% 50%, 100% 0, 100% 100%, 50% 50%, 0 100%);
+  filter: drop-shadow(0 1px 1px #0008);
+}
 .guide-launcher strong { font: 12px Marcellus, serif; letter-spacing: .05em; }
 .guide-panel {
   position: fixed; z-index: 1300; right: 22px; bottom: 22px; width: min(390px, calc(100vw - 32px));

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Zenith
+Comment=Guild Wars 2 situational companion
+Exec=@PROJECT_ROOT@/scripts/launch-zenith
+Icon=@PROJECT_ROOT@/desktop/zenith.svg
+Terminal=false
+Categories=Game;
+StartupNotify=true

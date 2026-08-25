@@ -11,7 +11,8 @@
     "bridge:mumble": "tsx bridge/src/index.ts --mumble",
     "bridge:proton": "tsx bridge/src/index.ts --proton",
     "build:proton-relay": "scripts/build-proton-relay.sh",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && tsc -p tsconfig.bridge-build.json && vite build",
+    "start": "node dist-bridge/index.js --proton",
     "check": "tsc -b && eslint .",
     "test": "vitest run"
   },
