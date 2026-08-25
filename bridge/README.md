@@ -41,12 +41,18 @@ The backend listens only on `127.0.0.1:38421`.
 | `GET /api/maps` | IDs explicitly registered with the backend |
 | `GET /api/maps/15` | Normalized Queensdale metadata, hearts, and landmark POIs |
 | `GET /api/maps/15?refresh=1` | Force an upstream refresh |
+| `POST /api/guide/turn` | Submit one bounded message to the owner-local Zenith Guide runtime |
 | `WS /` | Player snapshots at 10 Hz |
 
 ArenaNet requests are restricted to registered maps, deduplicated while in
 flight, cached for five minutes, aborted after eight seconds, and fall back to a
 stale cached response during a transient upstream failure. No arbitrary proxy
 URL is accepted.
+
+Guide requests accept only a message and optional conversation UUID. The
+backend fixes the runtime role, communicates over the configured Unix socket,
+and returns only the conversation UUID and response text. Runtime decisions,
+scene evidence, prompts, and provider details remain behind the local boundary.
 
 Example WebSocket or `/api/player` payload:
 

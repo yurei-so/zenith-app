@@ -87,6 +87,14 @@ The player control in the map's upper-right corner supports focus/follow.
 Dragging the map or selecting an objective exits follow mode while preserving a
 stable north-up view.
 
+Zenith Guide is an optional workstation-local conversation surface. The React
+panel sends bounded messages to the loopback backend, which proxies them over an
+owner-only Unix socket to the dedicated `zenith.scene-aware` Chat Runtime role.
+Chat Runtime captures one privacy-projected Zenith Vision scene per turn; the
+browser never receives screenshots, OCR, model-routing details, roles, or the
+runtime wake envelope. If the guide is unavailable, maps and telemetry continue
+normally and the panel reports an isolated error.
+
 Queensdale's landmark POIs are layered from the public map payload rather than
 assumed to be legible in the raster tiles. They can be toggled manually and
 remain visible in a muted gray completed state. Existing heart completion

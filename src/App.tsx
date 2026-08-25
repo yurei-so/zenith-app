@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CompletionEffects } from "./components/CompletionEffects";
 import { HeartList } from "./components/HeartList";
+import { GuidePanel } from "./components/GuidePanel";
 import { MapCanvas } from "./components/MapCanvas";
 import { PlayerProgression } from "./components/PlayerProgression";
 import { appEvents } from "./domain/events";
@@ -195,6 +196,7 @@ export default function App() {
         onFollowingChange={setFollowing}
       />
       <CompletionEffects />
+      <GuidePanel />
     </main>
   );
 }

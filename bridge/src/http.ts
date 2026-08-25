@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Gw2ApiClient } from "./gw2-api.js";
+import type { GuideChatClient } from "./guide-chat.js";
 import type { PlayerSnapshot } from "./types.js";
 
 const LOCAL_ORIGIN = /^http:\/\/(127\.0\.0\.1|localhost):\d+$/;
@@ -10,7 +11,7 @@ function setCors(request: IncomingMessage, response: ServerResponse) {
     response.setHeader("access-control-allow-origin", origin);
     response.setHeader("vary", "Origin");
   }
-  response.setHeader("access-control-allow-methods", "GET, OPTIONS");
+  response.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
   response.setHeader("access-control-allow-headers", "content-type");
 }
 
@@ -27,6 +28,7 @@ function sendJson(response: ServerResponse, status: number, value: unknown) {
 
 export function createHttpHandler(
   api: Gw2ApiClient,
+  guide: Pick<GuideChatClient, "submit">,
   getPlayer: () => PlayerSnapshot,
   startedAt: number,
 ) {
@@ -37,12 +39,26 @@ export function createHttpHandler(
       response.end();
       return;
     }
+    const url = new URL(request.url ?? "/", "http://127.0.0.1");
+    if (request.method === "POST" && url.pathname === "/api/guide/turn") {
+      let input: Awaited<ReturnType<typeof readGuideInput>>;
+      try {
+        input = await readGuideInput(request);
+      } catch {
+        sendJson(response, 400, { error: "INVALID_GUIDE_REQUEST" });
+        return;
+      }
+      try {
+        sendJson(response, 200, await guide.submit(input.message, input.conversationId));
+      } catch {
+        sendJson(response, 503, { error: "GUIDE_UNAVAILABLE" });
+      }
+      return;
+    }
     if (request.method !== "GET") {
       sendJson(response, 405, { error: "Method not allowed" });
       return;
     }
-
-    const url = new URL(request.url ?? "/", "http://127.0.0.1");
     try {
       if (url.pathname === "/api/health") {
         const player = getPlayer();
@@ -86,4 +102,27 @@ export function createHttpHandler(
       sendJson(response, 502, { error: message });
     }
   };
+}
+
+async function readGuideInput(request: IncomingMessage) {
+  if (!request.headers["content-type"]?.toLowerCase().startsWith("application/json")) {
+    throw new Error("JSON required");
+  }
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of request) {
+    const value = Buffer.from(chunk);
+    size += value.byteLength;
+    if (size > 16 * 1024) throw new Error("Request too large");
+    chunks.push(value);
+  }
+  const input = JSON.parse(Buffer.concat(chunks).toString("utf8")) as Record<string, unknown>;
+  const message = typeof input.message === "string" ? input.message.trim() : "";
+  if (!message || message.length > 4_000) throw new Error("Invalid message");
+  const conversationId = input.conversationId;
+  if (conversationId !== undefined &&
+      (typeof conversationId !== "string" || !/^[0-9a-f-]{36}$/i.test(conversationId))) {
+    throw new Error("Invalid conversation ID");
+  }
+  return { message, ...(typeof conversationId === "string" ? { conversationId } : {}) };
 }

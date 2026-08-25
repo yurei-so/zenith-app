@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { WebSocketServer, type WebSocket } from "ws";
 import { Gw2ApiClient } from "./gw2-api.js";
+import { GuideChatClient } from "./guide-chat.js";
 import { createHttpHandler } from "./http.js";
 import { createMockSource } from "./mock.js";
 import { createMumbleLinkSource } from "./mumblelink.js";
@@ -47,8 +48,12 @@ let currentPlayer: PlayerSnapshot = {
 };
 
 const api = new Gw2ApiClient();
+const guide = new GuideChatClient(
+  process.env.ZENITH_CHAT_RUNTIME_SOCKET ?? "/run/user/1000/chat-runtime-zenith/chat-runtime.sock",
+  process.env.ZENITH_CHAT_AGENT_ID ?? "zenith-guide",
+);
 const server = createServer(
-  createHttpHandler(api, () => currentPlayer, startedAt),
+  createHttpHandler(api, guide, () => currentPlayer, startedAt),
 );
 const sockets = new WebSocketServer({ noServer: true });
 
